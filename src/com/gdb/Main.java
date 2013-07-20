@@ -12,6 +12,7 @@ public class Main extends PApplet {
 
     private PImage level = loadImage("level.png");
     private Hero hero;
+    private Door door;
 
     private PFont font = loadFont("Ziggurat.vlw");
     private ArrayList<Light> lights = new ArrayList<Light>();
@@ -28,6 +29,9 @@ public class Main extends PApplet {
 	    }
 	    else if (line_data[0].contentEquals("hero")) {
 		hero = new Hero(Integer.parseInt(line_data[1]),Integer.parseInt(line_data[2]));
+	    }
+	    else if (line_data[0].contentEquals("door")) {
+		door = new Door(Integer.parseInt(line_data[1]),Integer.parseInt(line_data[2]));
 	    }
 	}
     }
@@ -47,6 +51,7 @@ public class Main extends PApplet {
 	    if (test_light != light)
 		test_light.draw();
 	}
+	door.draw();
 	light.draw();
 	
 	if (!light.isLocked())
@@ -168,7 +173,7 @@ public class Main extends PApplet {
 	    heroDown.add(loadImage("char_s2.png"));
 	    heroDown.add(loadImage("char_s1.png"));
 	    heroDown.add(loadImage("char_s3.png"));
-	    position = new Rectangle(x, y, heroLeft.get(0).width, heroLeft.get(0).height);
+	    position = new Rectangle(x - heroLeft.get(0).width / 2, y - heroLeft.get(0).height / 2, heroLeft.get(0).width, heroLeft.get(0).height);
 	}
 
 	public void draw() {
@@ -421,7 +426,19 @@ public class Main extends PApplet {
     }
     
     class Door {
+	PImage my_image;
+	Rectangle position;
 	
+	Door(int my_x, int my_y) {
+	    my_image = loadImage("door.png");
+	    float my_width = my_image.width;
+	    float my_height = my_image.height;
+	    position = new Rectangle(my_x - my_width / 2, my_y - my_height / 2, my_width, my_height);
+	}
+	
+	public void draw() {
+	    image(my_image,position.getX(), position.getY());
+	}
     }
 }
 
