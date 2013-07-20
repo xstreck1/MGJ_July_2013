@@ -1,0 +1,14 @@
+hero,128,73
+light,182,65,3.24,true,54
+light,240,104,0,false,54
+monster,439,44
+light,144,119,0,false,54
+light,102,172,0,false,54
+door,47,203
+light,294,62,0,false,54
+light,348,112,0,false,54
+light,389,170,0,false,54
+light,409,109,0,false,54
+light,403,53,0,false,54
+light,348,44,0,false,54
+sword,195,25

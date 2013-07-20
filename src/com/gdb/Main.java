@@ -10,42 +10,78 @@ import processing.core.PImage;
 public class Main extends PApplet {
     private final float STEP_SIZE = 3.0f;
 
-    private PImage level = loadImage("level.png");
+    private PImage level = loadImage("background.png");
     private Hero hero;
     private Door door;
+    private ArrayList<Light> lights;
 
     private PFont font = loadFont("Ziggurat.vlw");
-    private ArrayList<Light> lights = new ArrayList<Light>();
-    int INFINITE = MAX_INT;
-    Light light;
 
-    public void readData() {
-	String lines[] = loadStrings("sample-data.txt");
-	
+    private int INFINITE = MAX_INT;
+    private Light light;
+    private boolean blocked;
+    private boolean dead;
+    private int lvl_no;
+    private int delay = 0;
+    private boolean finished;
+
+    public void readData(String filename) {
+	lights = new ArrayList<Light>();
+	String lines[] = loadStrings(filename);
+
 	for (String line : lines) {
 	    String line_data[] = split(line, ',');
 	    if (line_data[0].contentEquals("light")) {
-		lights.add(new Light(Integer.parseInt(line_data[1]),Integer.parseInt(line_data[2]),Float.parseFloat(line_data[3]), Boolean.parseBoolean(line_data[4]), 16 + Integer.parseInt(line_data[5])));
-	    }
-	    else if (line_data[0].contentEquals("hero")) {
-		hero = new Hero(Integer.parseInt(line_data[1]),Integer.parseInt(line_data[2]));
-	    }
-	    else if (line_data[0].contentEquals("door")) {
-		door = new Door(Integer.parseInt(line_data[1]),Integer.parseInt(line_data[2]));
+		lights.add(new Light(Integer.parseInt(line_data[1]), Integer.parseInt(line_data[2]), Float.parseFloat(line_data[3]), Boolean.parseBoolean(line_data[4]),
+			16 + Integer.parseInt(line_data[5])));
+	    } else if (line_data[0].contentEquals("hero")) {
+		hero = new Hero(Integer.parseInt(line_data[1]), Integer.parseInt(line_data[2]));
+	    } else if (line_data[0].contentEquals("door")) {
+		door = new Door(Integer.parseInt(line_data[1]), Integer.parseInt(line_data[2]));
 	    }
 	}
     }
-    
+
     public void setup() {
 	size(480, 320);
 	loop();
 	frameRate(25);
 	textFont(font);
-	readData();
+	lvl_no = 4;
+	startNewLevel();
+	textSize(120);
+    }
+
+    public void startNewLevel() {
+	if (lvl_no > 5)
+	    return;
+	readData("level" + String.valueOf(lvl_no) + ".txt");
 	light = lights.get(0);
+	blocked = false;
+	dead = false;
+	finished = false;
+    }
+
+    public void setFinish() {
+	blocked = true;
+	if (!finished)
+	    delay = 10;
+	finished = true;
+	drawText();
+    }
+
+    public void drawText() {
+	fill(255, 0, 0);
+	if (dead)
+	    text("dead", 40, 240);
+	else
+	    text("victor", 40, 240);
     }
 
     public void draw() {
+	if (delay-- > 0)
+	    return;
+
 	background(level);
 	for (Light test_light : lights) {
 	    if (test_light != light)
@@ -53,9 +89,28 @@ public class Main extends PApplet {
 	}
 	door.draw();
 	light.draw();
-	
 	if (!light.isLocked())
 	    hero.draw();
+
+	if (blocked) {
+	    drawText();
+	}
+
+	if (hitsDoor(hero.getContact(), door.getPosition())) {
+	    dead = false;
+	    lvl_no++;
+	    setFinish();
+	}
+
+	if (keyPressed) {
+	    if (keyCode == UP || keyCode == DOWN || keyCode == LEFT || keyCode == RIGHT) {
+		if (!blocked)
+		    hero.nextFrame();
+		else {
+		    startNewLevel();
+		}
+	    }
+	}
 
 	boolean locked = false;
 	for (Light test_light : lights) {
@@ -68,16 +123,11 @@ public class Main extends PApplet {
 		locked = true;
 	    }
 	}
-	
+
 	if (locked == false) {
 	    if (hitsDarkness(hero.getContact(), light.getCenter(), light.getAngle(), light.getLightAngle(), light.getDistance())) {
-		fill(255, 0, 0);
-		text("dead", 40, 40);
-	    }
-
-	    if (keyPressed) {
-		if (keyCode == UP || keyCode == DOWN || keyCode == LEFT || keyCode == RIGHT)
-		    hero.nextFrame();
+		dead = true;
+		setFinish();
 	    }
 	}
     }
@@ -140,9 +190,20 @@ public class Main extends PApplet {
 	return false;
     }
 
+    public boolean hitsDoor(Point contact, Rectangle door_Rect) {
+	if (contact.getX() < door_Rect.getX())
+	    return false;
+	if (contact.getY() < door_Rect.getY())
+	    return false;
+	if (contact.getX() > door_Rect.getX() + door_Rect.getWidth())
+	    return false;
+	if (contact.getY() > door_Rect.getY() + door_Rect.getHeight())
+	    return false;
+	return true;
+    }
+
     /*
      * public void overlap(Rectangle rect, Triangle traingle) {
-     *
      */
 
     public class Hero {
@@ -272,7 +333,6 @@ public class Main extends PApplet {
 		rect(0, 0, width, height * 2);
 		popMatrix();
 
-		
 	    }
 	    popMatrix();
 	    // Source
@@ -424,20 +484,24 @@ public class Main extends PApplet {
 	    return y + my_height / 2;
 	}
     }
-    
+
     class Door {
 	PImage my_image;
 	Rectangle position;
-	
+
+	public Rectangle getPosition() {
+	    return position;
+	}
+
 	Door(int my_x, int my_y) {
 	    my_image = loadImage("door.png");
 	    float my_width = my_image.width;
 	    float my_height = my_image.height;
 	    position = new Rectangle(my_x - my_width / 2, my_y - my_height / 2, my_width, my_height);
 	}
-	
+
 	public void draw() {
-	    image(my_image,position.getX(), position.getY());
+	    image(my_image, position.getX(), position.getY());
 	}
     }
 }

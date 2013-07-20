@@ -5,6 +5,6 @@ light,218,147,0,false,120
 light,263,215,0,false,120
 light,70,140,0,false,120
 light,338,189,0,false,120
-door,348,269
+door,160,69
 monster,200,45
 sword,45,190
