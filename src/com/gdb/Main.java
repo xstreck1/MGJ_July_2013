@@ -1,14 +1,14 @@
 package com.gdb;
 
 import java.awt.Point;
-import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 
 import processing.core.PApplet;
 import processing.core.PFont;
 import processing.core.PImage;
 
 public class Main extends PApplet {
-    private final int STEP_SIZE = 2;
+    private final float STEP_SIZE = 3.5f;
 
     private PImage level = loadImage("level.png");
     private Hero hero = new Hero();
@@ -31,6 +31,11 @@ public class Main extends PApplet {
 	    light.setLocked(true);
 	} else 
 	    light.setLocked(false);
+	
+	if (keyPressed) {
+	    if (keyCode == UP || keyCode == DOWN || keyCode == LEFT || keyCode == RIGHT)
+	    hero.nextFrame();
+	}
     }
 
     public void keyPressed() {
@@ -40,14 +45,18 @@ public class Main extends PApplet {
 		hero.setCenter(light.getFrontPos());
 		light.setLocked(false);
 	    }
+	    hero.setDirection(3);
 	} else if (keyCode == DOWN) {
 	    hero.updateSpeed(0, STEP_SIZE);
+	    hero.setDirection(1);
 	} else if (keyCode == LEFT) {
 	    light.turnLeft(true);
 	    hero.updateSpeed(-STEP_SIZE, 0);
+	    hero.setDirection(2);
 	} else if (keyCode == RIGHT) {
 	    light.turnRight(true);
 	    hero.updateSpeed(STEP_SIZE, 0);
+	    hero.setDirection(0);
 	}
     }
 
@@ -83,20 +92,50 @@ public class Main extends PApplet {
 	private Rectangle position;
 	private float moveX = 0.0f;
 	private float moveY = 0.0f;
-	private float angle = 0;
-	private PImage heroImg;
+	private int frame = 0;
+	private ArrayList<PImage> heroLeft = new ArrayList<PImage>();
+	private ArrayList<PImage> heroUp = new ArrayList<PImage>();
+	private ArrayList<PImage> heroRight = new ArrayList<PImage>();
+	private ArrayList<PImage> heroDown = new ArrayList<PImage>();
+	private ArrayList<PImage> heroIm = heroRight;
 
 	Hero() {
-	    heroImg = loadImage("char_e1.png");
-	    position = new Rectangle(100, 100, heroImg.width, heroImg.height);
+	    heroLeft.add(loadImage("char_w1.png"));
+	    heroLeft.add(loadImage("char_w2.png"));
+	    heroLeft.add(loadImage("char_w3.png"));
+	    heroUp.add(loadImage("char_n1.png"));
+	    heroUp.add(loadImage("char_n2.png"));
+	    heroUp.add(loadImage("char_n3.png"));
+	    heroRight.add(loadImage("char_e1.png"));
+	    heroRight.add(loadImage("char_e2.png"));
+	    heroRight.add(loadImage("char_e3.png"));
+	    heroDown.add(loadImage("char_s1.png"));
+	    heroDown.add(loadImage("char_s2.png"));
+	    heroDown.add(loadImage("char_s3.png"));
+	    position = new Rectangle(300, 150, heroLeft.get(0).width, heroLeft.get(0).height);
 	}
 	
 	public void draw() {
 	    position.setX(position.getX() + moveX);
 	    position.setY(position.getY() + moveY);
-	    image(heroImg, position.getX(), position.getY());
+	    image(heroIm.get(frame), position.getX(), position.getY());
+	}
+	
+	public void setDirection(int new_direction) {
+	    if (new_direction == 0)
+		heroIm = heroRight;
+	    else if (new_direction == 1)
+		heroIm = heroDown;
+	    else if (new_direction == 2)
+		heroIm = heroLeft;
+	    else if (new_direction == 3)
+		heroIm = heroUp;
 	}
 
+	public void nextFrame() {
+	    frame = (frame + 1) % 3;	    
+	}
+	
 	public void updateSpeed(float x, float y) {
 	    moveX = x;
 	    moveY = y;
@@ -172,7 +211,10 @@ public class Main extends PApplet {
 	    pushMatrix();
 	    rotate(angle);
 	    translate(-position.getWidth() / 2, -position.getHeight() / 2);
-	    image(source_empty, 0, 0);
+	    if (locked)
+	        image(source_habited, 0, 0);
+	    else
+		image(source_empty, 0, 0);
 	    popMatrix();
 
 	    // Blur
