@@ -11,20 +11,33 @@ public class Main extends PApplet {
     private final float STEP_SIZE = 3.0f;
 
     private PImage level = loadImage("level.png");
-    private Hero hero = new Hero();
+    private Hero hero;
 
     private PFont font = loadFont("Ziggurat.vlw");
     private ArrayList<Light> lights = new ArrayList<Light>();
     int INFINITE = MAX_INT;
     Light light;
 
+    public void readData() {
+	String lines[] = loadStrings("sample-data.txt");
+	
+	for (String line : lines) {
+	    String line_data[] = split(line, ',');
+	    if (line_data[0].contentEquals("light")) {
+		lights.add(new Light(Integer.parseInt(line_data[1]),Integer.parseInt(line_data[2]),Float.parseFloat(line_data[3]), Boolean.parseBoolean(line_data[4]), 16 + Integer.parseInt(line_data[5])));
+	    }
+	    else if (line_data[0].contentEquals("hero")) {
+		hero = new Hero(Integer.parseInt(line_data[1]),Integer.parseInt(line_data[2]));
+	    }
+	}
+    }
+    
     public void setup() {
 	size(480, 320);
 	loop();
 	frameRate(25);
 	textFont(font);
-	lights.add(new Light(200, 150, 0.1f, true, 100));
-	lights.add(new Light(230, 210, 0.1f, false, 100));
+	readData();
 	light = lights.get(0);
     }
 
@@ -124,8 +137,7 @@ public class Main extends PApplet {
 
     /*
      * public void overlap(Rectangle rect, Triangle traingle) {
-     * 
-     * }
+     *
      */
 
     public class Hero {
@@ -139,7 +151,7 @@ public class Main extends PApplet {
 	private ArrayList<PImage> heroDown = new ArrayList<PImage>();
 	private ArrayList<PImage> heroIm = heroRight;
 
-	Hero() {
+	Hero(int x, int y) {
 	    heroLeft.add(loadImage("char_w1.png"));
 	    heroLeft.add(loadImage("char_w2.png"));
 	    heroLeft.add(loadImage("char_w1.png"));
@@ -156,7 +168,7 @@ public class Main extends PApplet {
 	    heroDown.add(loadImage("char_s2.png"));
 	    heroDown.add(loadImage("char_s1.png"));
 	    heroDown.add(loadImage("char_s3.png"));
-	    position = new Rectangle(220, 130, heroLeft.get(0).width, heroLeft.get(0).height);
+	    position = new Rectangle(x, y, heroLeft.get(0).width, heroLeft.get(0).height);
 	}
 
 	public void draw() {
@@ -406,6 +418,10 @@ public class Main extends PApplet {
 	public float getCenterY() {
 	    return y + my_height / 2;
 	}
+    }
+    
+    class Door {
+	
     }
 }
 
