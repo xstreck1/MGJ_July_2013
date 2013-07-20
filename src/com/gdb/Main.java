@@ -1,6 +1,9 @@
 package com.gdb;
 
-import processing.core.*;
+import java.awt.geom.Rectangle2D;
+
+import processing.core.PApplet;
+import processing.core.PImage;
 
 public class Main extends PApplet {
     private final int STEP_SIZE = 2;
@@ -17,8 +20,12 @@ public class Main extends PApplet {
 
     public void draw() {
 	background(level);
-	hero.draw();
 	light.draw();
+	hero.draw();
+	if (hitsLight(hero.getPosition(), light.getPosition())) {
+	    light.setLocked(true);
+	} else 
+	    light.setLocked(false);
     }
 
     public void keyPressed() {
@@ -32,11 +39,9 @@ public class Main extends PApplet {
 	} else if (keyCode == RIGHT) {
 	    light.turnRight(true);
 	    hero.updateSpeed(STEP_SIZE, 0);
-	} else if (key == ' ') {
-	    light.locking();
 	}
     }
-    
+
     public void keyReleased() {
 	if (keyCode == UP) {
 	    hero.updateSpeed(0, 0);
@@ -51,84 +56,128 @@ public class Main extends PApplet {
 	}
     }
 
+    public boolean hitsLight(Rectangle hero_rect, Rectangle light_rect) {
+	float maxDistance = round(hero_rect.getWidth() / 2.0f + light_rect.getWidth() / 2.0f);
+	int distanceX = round(abs(hero_rect.getCenterX() - light_rect.getX()));
+	int distanceY = round(abs(hero_rect.getCenterY() - light_rect.getY()));	
+	float distance = sqrt(pow(distanceX,2) + pow(distanceY,2));
+	return (distance < maxDistance);
+    }
+
+    /*
+     * public void overlap(Rectangle rect, Triangle traingle) {
+     * 
+     * }
+     */
+
     public class Hero {
-	private float posX = 100f;
-	private float posY = 100f;
+	private Rectangle position;
 	private float moveX = 0.0f;
 	private float moveY = 0.0f;
 	private float angle = 0;
-	private PImage heroImg = loadImage("hero.png");
+	private PImage heroImg;
 
+	Hero() {
+	    heroImg = loadImage("hero.png");
+	    position = new Rectangle(100, 100, heroImg.width, heroImg.height);
+	}
+	
 	public void draw() {
-	    posX += moveX;
-	    posY += moveY;
-	    image(heroImg, posX, posY);
+	    position.setX(position.getX() + moveX);
+	    position.setY(position.getY() + moveY);
+	    image(heroImg, position.getX(), position.getY());
 	}
 
 	public void updateSpeed(float x, float y) {
 	    moveX = x;
 	    moveY = y;
 	}
+
+	public Rectangle getPosition() {
+	    return position;
+	}
+
+	public void setPosition(Rectangle position) {
+	    this.position = position;
+	}
     }
 
     public class Light {
-	private final int SOURCE_WIDHT = 20;
-	private final int SOURCE_HEIGHT = 20;
+	private Rectangle position;
+	private final int BLUR_WIDHT = 100;
+	private final int BLUR_HEIGHT = BLUR_WIDHT;
 	private final float LIGHT_ANGLE = 0.5f;
 	private final int DISTANCE = 200;
 
-	private int posX = 50;
-	private int posY = 50;
 	private float angle = 0;
-	private PImage light = loadImage("light.png");
+	private PImage source_empty;
+	private PImage source_habited;
 	private boolean locked = false;
 	private boolean turnLeft = false;
 	private boolean turnRight = false;
 
+	Light() {
+	    source_empty = loadImage("light.png");
+	    source_habited = loadImage("light2.png");
+	    position = new Rectangle(200,150,source_empty.width, source_empty.height);
+	}
+	
 	public void draw() {
 	    turn();
-	    // Light
-	    fill(0);
+
+	    // Darkness
 	    pushMatrix();
-	    translate(posX, posY);
-	    
+	    fill(0);
+	    translate(position.getX(), position.getY());
+
 	    // Left corner
 	    pushMatrix();
 	    rotate(angle - LIGHT_ANGLE);
 	    pushMatrix();
 	    translate(0, -height);
-	    rect(-width,-height,width*3,height*2);
+	    rect(-width, -height, width * 3, height * 2);
 	    popMatrix();
-	    
+
 	    // Right corner
-	    rotate(LIGHT_ANGLE*(2));
-	    rect(-width,0,width*3,height*2);
-	    
+	    rotate(LIGHT_ANGLE * (2));
+	    rect(-width, 0, width * 3, height * 2);
+
 	    // Front
-	    rotate(LIGHT_ANGLE*(-1));
+	    rotate(LIGHT_ANGLE * (-1));
 	    translate(DISTANCE, -height);
-	    rect(0,0, width, height*2);
+	    rect(0, 0, width, height * 2);
 	    popMatrix();
-	    
+
 	    popMatrix();
-	    
+
 	    // Source
 	    pushMatrix();
-	    translate(posX, posX);
+	    translate(position.getX(), position.getY());
+
+	    // Object
+	    pushMatrix();
 	    rotate(angle);
-	    translate(-SOURCE_WIDHT / 2, -SOURCE_HEIGHT / 2);
-	    image(light, 0, 0);
+	    translate(-position.getWidth() / 2, -position.getHeight() / 2);
+	    image(source_empty, 0, 0);
+	    popMatrix();
+
+	    // Blur
+	    pushMatrix();
+	    noStroke();
+	    fill(255, 255, 255, 5);
+	    ellipse(0, 0, BLUR_WIDHT, BLUR_HEIGHT);
+	    ellipse(0, 0, BLUR_WIDHT * 0.6f, BLUR_HEIGHT * 0.6f);
+	    ellipse(0, 0, BLUR_WIDHT * 0.4f, BLUR_HEIGHT * 0.4f);
+	    ellipse(0, 0, BLUR_WIDHT * 0.3f, BLUR_HEIGHT * 0.3f);
+	    popMatrix();
+
 	    popMatrix();
 	}
 
 	public void setPos(int x, int y, float _angle) {
-	    posX = x;
-	    posY = y;
+	    position.setX(x);
+	    position.setY(y);
 	    angle = _angle;
-	}
-
-	public void locking() {
-	    locked = !locked;
 	}
 
 	private void turn() {
@@ -139,13 +188,79 @@ public class Main extends PApplet {
 	    else if (turnRight)
 		angle += 0.1;
 	}
-	
+
 	public void turnLeft(boolean turn) {
 	    turnLeft = turn;
 	}
-	
+
 	public void turnRight(boolean turn) {
 	    turnRight = turn;
+	}
+
+	public boolean isLocked() {
+	    return locked;
+	}
+
+	public void setLocked(boolean locked) {
+	    this.locked = locked;
+	}
+
+	public Rectangle getPosition() {
+	    return position;
+	}
+    }
+
+    public class Rectangle {
+	private float x;
+	private float y;
+	private float width;
+	private float height;
+
+	Rectangle(float _x, float _y, float _width, float _height) {
+	    x = _x;
+	    y = _y;
+	    width = _width;
+	    height = _height;
+	}
+
+	public float getX() {
+	    return x;
+	}
+
+	public void setX(float x) {
+	    this.x = x;
+	}
+
+	public float getY() {
+	    return y;
+	}
+
+	public void setY(float y) {
+	    this.y = y;
+	}
+
+	public float getWidth() {
+	    return width;
+	}
+
+	public void setWidth(float width) {
+	    this.width = width;
+	}
+
+	public float getHeight() {
+	    return height;
+	}
+
+	public void setHeight(float height) {
+	    this.height = height;
+	}
+
+	public float getCenterX() {
+	    return x + width / 2;
+	}
+
+	public float getCenterY() {
+	    return y + height / 2;
 	}
     }
 }
