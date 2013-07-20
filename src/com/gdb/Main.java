@@ -12,41 +12,56 @@ public class Main extends PApplet {
 
     private PImage level = loadImage("level.png");
     private Hero hero = new Hero();
-    private Light light = new Light();
+
     private PFont font = loadFont("Ziggurat.vlw");
+    private ArrayList<Light> lights = new ArrayList<Light>();
+    int INFINITE = MAX_INT;
+    Light light;
 
     public void setup() {
 	size(480, 320);
 	loop();
 	frameRate(25);
 	textFont(font);
+	lights.add(new Light(200, 150, 0.1f, true, 100));
+	lights.add(new Light(230, 210, 0.1f, false, 100));
+	light = lights.get(0);
     }
 
     public void draw() {
-
-	
 	background(level);
+	for (Light test_light : lights) {
+	    if (test_light != light)
+		test_light.draw();
+	}
 	light.draw();
+	
 	if (!light.isLocked())
 	    hero.draw();
 
-	if (hitsLight(hero.getPosition(), light.getPosition())) {
-	    light.setLocked(true);
-	} else
-	    light.setLocked(false);
-
-	if (hitsDarkness(hero.getContact(), light.getCenter(), light.getAngle(), light.getLightAngle(), light.getDistance())) {
-	    fill(255,0,0);
-	    text("dead", 40,40);
-	}
-
-	if (keyPressed) {
-	    if (keyCode == UP || keyCode == DOWN || keyCode == LEFT || keyCode == RIGHT)
-		hero.nextFrame();
+	boolean locked = false;
+	for (Light test_light : lights) {
+	    if (hitsLight(hero.getPosition(), test_light.getPosition())) {
+		light.setLocked(false);
+		light.setShining(false);
+		test_light.setLocked(true);
+		test_light.setShining(true);
+		light = test_light;
+		locked = true;
+	    }
 	}
 	
-	
-	
+	if (locked == false) {
+	    if (hitsDarkness(hero.getContact(), light.getCenter(), light.getAngle(), light.getLightAngle(), light.getDistance())) {
+		fill(255, 0, 0);
+		text("dead", 40, 40);
+	    }
+
+	    if (keyPressed) {
+		if (keyCode == UP || keyCode == DOWN || keyCode == LEFT || keyCode == RIGHT)
+		    hero.nextFrame();
+	    }
+	}
     }
 
     public void keyPressed() {
@@ -103,7 +118,7 @@ public class Main extends PApplet {
 	    return true;
 	if (right > (float) maxDistance)
 	    return true;
-	
+
 	return false;
     }
 
@@ -127,15 +142,19 @@ public class Main extends PApplet {
 	Hero() {
 	    heroLeft.add(loadImage("char_w1.png"));
 	    heroLeft.add(loadImage("char_w2.png"));
+	    heroLeft.add(loadImage("char_w1.png"));
 	    heroLeft.add(loadImage("char_w3.png"));
 	    heroUp.add(loadImage("char_n1.png"));
 	    heroUp.add(loadImage("char_n2.png"));
+	    heroUp.add(loadImage("char_n1.png"));
 	    heroUp.add(loadImage("char_n3.png"));
 	    heroRight.add(loadImage("char_e1.png"));
 	    heroRight.add(loadImage("char_e2.png"));
+	    heroRight.add(loadImage("char_e1.png"));
 	    heroRight.add(loadImage("char_e3.png"));
 	    heroDown.add(loadImage("char_s1.png"));
 	    heroDown.add(loadImage("char_s2.png"));
+	    heroDown.add(loadImage("char_s1.png"));
 	    heroDown.add(loadImage("char_s3.png"));
 	    position = new Rectangle(220, 130, heroLeft.get(0).width, heroLeft.get(0).height);
 	}
@@ -158,7 +177,7 @@ public class Main extends PApplet {
 	}
 
 	public void nextFrame() {
-	    frame = (frame + 1) % 3;
+	    frame = (frame + 1) % 4;
 	}
 
 	public void updateSpeed(float x, float y) {
@@ -180,7 +199,7 @@ public class Main extends PApplet {
 	}
 
 	public Point getContact() {
-	    return new Point(round(position.getCenterX()), round(position.getCenterY() + position.getHeight()*0.40f));
+	    return new Point(round(position.getCenterX()), round(position.getCenterY() + position.getHeight() * 0.40f));
 	}
     }
 
@@ -189,49 +208,56 @@ public class Main extends PApplet {
 	private final int BLUR_WIDHT = 100;
 	private final int BLUR_HEIGHT = BLUR_WIDHT;
 	private final float LIGHT_ANGLE = 0.5f;
-	private final int DISTANCE = 200;
 
-	private float angle = 0;
+	private int distance;
+	private float angle;
 	private PImage source_empty;
 	private PImage source_habited;
+	private boolean shining = false;
 	private boolean locked = false;
 	private boolean turnLeft = false;
 	private boolean turnRight = false;
 
-	Light() {
+	Light(int x, int y, float angle, boolean on, int distance) {
 	    source_empty = loadImage("light.png");
 	    source_habited = loadImage("light_used.png");
-	    position = new Rectangle(200, 150, source_empty.width, source_empty.height);
+	    this.angle = angle;
+	    this.shining = on;
+	    this.distance = distance;
+	    position = new Rectangle(x, y, source_empty.width, source_empty.height);
 	}
 
 	public void draw() {
-	    turn();
+	    if (locked)
+		turn();
 
 	    // Darkness
 	    pushMatrix();
 	    fill(0);
 	    translate(position.getX(), position.getY());
 
-	    // Left corner
-	    pushMatrix();
-	    rotate(angle - LIGHT_ANGLE);
-	    pushMatrix();
-	    translate(0, -height);
-	    rect(-width, -height, width * 3, height * 2);
+	    if (shining) {
+		// Left corner
+		pushMatrix();
+		rotate(angle - LIGHT_ANGLE);
+		pushMatrix();
+		translate(0, -height);
+		rect(-width, -height, width * 3, height * 2);
+		popMatrix();
+
+		// Right corner
+		rotate(LIGHT_ANGLE * (2));
+		rect(-width, 0, width * 3, height * 2);
+
+		// Front
+		rotate(LIGHT_ANGLE * (-1));
+		translate(distance, -height);
+		rect(0, 0, width, height * 2);
+		popMatrix();
+
+		
+	    }
 	    popMatrix();
-
-	    // Right corner
-	    rotate(LIGHT_ANGLE * (2));
-	    rect(-width, 0, width * 3, height * 2);
-
-	    // Front
-	    rotate(LIGHT_ANGLE * (-1));
-	    translate(DISTANCE, -height);
-	    rect(0, 0, width, height * 2);
-	    popMatrix();
-
-	    popMatrix();
-
 	    // Source
 	    pushMatrix();
 	    translate(position.getX(), position.getY());
@@ -245,16 +271,17 @@ public class Main extends PApplet {
 	    else
 		image(source_empty, 0, 0);
 	    popMatrix();
-
-	    // Blur
-	    pushMatrix();
-	    noStroke();
-	    fill(255, 255, 255, 5);
-	    ellipse(0, 0, BLUR_WIDHT, BLUR_HEIGHT);
-	    ellipse(0, 0, BLUR_WIDHT * 0.6f, BLUR_HEIGHT * 0.6f);
-	    ellipse(0, 0, BLUR_WIDHT * 0.4f, BLUR_HEIGHT * 0.4f);
-	    ellipse(0, 0, BLUR_WIDHT * 0.3f, BLUR_HEIGHT * 0.3f);
-	    popMatrix();
+	    if (shining) {
+		// Blur
+		pushMatrix();
+		noStroke();
+		fill(255, 255, 255, 5);
+		ellipse(0, 0, BLUR_WIDHT, BLUR_HEIGHT);
+		ellipse(0, 0, BLUR_WIDHT * 0.6f, BLUR_HEIGHT * 0.6f);
+		ellipse(0, 0, BLUR_WIDHT * 0.4f, BLUR_HEIGHT * 0.4f);
+		ellipse(0, 0, BLUR_WIDHT * 0.3f, BLUR_HEIGHT * 0.3f);
+		popMatrix();
+	    }
 
 	    popMatrix();
 	}
@@ -290,6 +317,14 @@ public class Main extends PApplet {
 	    this.locked = locked;
 	}
 
+	public boolean isShining() {
+	    return shining;
+	}
+
+	public void setShining(boolean shining) {
+	    this.shining = shining;
+	}
+
 	public Rectangle getPosition() {
 	    return position;
 	}
@@ -303,7 +338,7 @@ public class Main extends PApplet {
 	}
 
 	public Point getCenter() {
-	    return new Point(round(position.getCenterX() - position.getWidth()/2), round(position.getCenterY() - position.getHeight()/2));
+	    return new Point(round(position.getCenterX() - position.getWidth() / 2), round(position.getCenterY() - position.getHeight() / 2));
 	}
 
 	public float getAngle() {
@@ -311,7 +346,7 @@ public class Main extends PApplet {
 	}
 
 	public int getDistance() {
-	    return DISTANCE;
+	    return distance;
 	}
 
 	public float getLightAngle() {
