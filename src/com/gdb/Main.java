@@ -1,8 +1,10 @@
 package com.gdb;
 
+import java.awt.Point;
 import java.awt.geom.Rectangle2D;
 
 import processing.core.PApplet;
+import processing.core.PFont;
 import processing.core.PImage;
 
 public class Main extends PApplet {
@@ -11,17 +13,20 @@ public class Main extends PApplet {
     private PImage level = loadImage("level.png");
     private Hero hero = new Hero();
     private Light light = new Light();
+    private PFont font = loadFont("Ziggurat.vlw");
 
     public void setup() {
 	size(480, 320);
 	loop();
 	frameRate(25);
+	textFont(font);
     }
 
     public void draw() {
 	background(level);
 	light.draw();
-	hero.draw();
+	if (!light.isLocked())
+	    hero.draw();
 	if (hitsLight(hero.getPosition(), light.getPosition())) {
 	    light.setLocked(true);
 	} else 
@@ -31,6 +36,10 @@ public class Main extends PApplet {
     public void keyPressed() {
 	if (keyCode == UP) {
 	    hero.updateSpeed(0, -STEP_SIZE);
+	    if (light.isLocked()) {
+		hero.setCenter(light.getFrontPos());
+		light.setLocked(false);
+	    }
 	} else if (keyCode == DOWN) {
 	    hero.updateSpeed(0, STEP_SIZE);
 	} else if (keyCode == LEFT) {
@@ -78,7 +87,7 @@ public class Main extends PApplet {
 	private PImage heroImg;
 
 	Hero() {
-	    heroImg = loadImage("hero.png");
+	    heroImg = loadImage("char_e1.png");
 	    position = new Rectangle(100, 100, heroImg.width, heroImg.height);
 	}
 	
@@ -100,6 +109,11 @@ public class Main extends PApplet {
 	public void setPosition(Rectangle position) {
 	    this.position = position;
 	}
+	
+	public void setCenter(Point point) {
+	    position.setX(point.x - position.getHeight());
+	    position.setY(point.y - position.getWidth());
+	}
     }
 
     public class Light {
@@ -118,7 +132,7 @@ public class Main extends PApplet {
 
 	Light() {
 	    source_empty = loadImage("light.png");
-	    source_habited = loadImage("light2.png");
+	    source_habited = loadImage("light_used.png");
 	    position = new Rectangle(200,150,source_empty.width, source_empty.height);
 	}
 	
@@ -208,19 +222,26 @@ public class Main extends PApplet {
 	public Rectangle getPosition() {
 	    return position;
 	}
+	
+	public Point getFrontPos() {
+	    int x = round(position.getCenterX() + 48*cos(angle));
+	    int y = round(position.getCenterY() + 48*sin(angle));
+	    
+	    return new Point(x,y);
+	}
     }
 
     public class Rectangle {
 	private float x;
 	private float y;
-	private float width;
-	private float height;
+	private float my_width;
+	private float my_height;
 
 	Rectangle(float _x, float _y, float _width, float _height) {
 	    x = _x;
 	    y = _y;
-	    width = _width;
-	    height = _height;
+	    my_width = _width;
+	    my_height = _height;
 	}
 
 	public float getX() {
@@ -240,27 +261,27 @@ public class Main extends PApplet {
 	}
 
 	public float getWidth() {
-	    return width;
+	    return my_width;
 	}
 
 	public void setWidth(float width) {
-	    this.width = width;
+	    this.my_width = width;
 	}
 
 	public float getHeight() {
-	    return height;
+	    return my_height;
 	}
 
 	public void setHeight(float height) {
-	    this.height = height;
+	    this.my_height = height;
 	}
 
 	public float getCenterX() {
-	    return x + width / 2;
+	    return x + my_width / 2;
 	}
 
 	public float getCenterY() {
-	    return y + height / 2;
+	    return y + my_height / 2;
 	}
     }
 }
