@@ -47,7 +47,7 @@ public class Main extends PApplet {
 	loop();
 	frameRate(25);
 	textFont(font);
-	lvl_no = 4;
+	lvl_no = 1;
 	startNewLevel();
 	textSize(120);
     }
