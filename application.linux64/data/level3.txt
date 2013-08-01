@@ -1,0 +1,6 @@
+hero,176,123
+light,217,128,3.14,true,80
+light,300,50,0,false,80
+monster,333,122
+light,380,51,0,false,80
+door,451,117
